@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 将所有日志级别设置为 OFF -->
+<!--    <root level="info">
+        <appender-ref ref="STDOUT" />
+&lt;!&ndash;    </root>
+    &lt;!&ndash; 或者只针对特定的包设置为 OFF &ndash;&gt;
+    <logger name="com.zdslkj.loggypackage" level="ON"/>&ndash;&gt;
+
+    <logger name="com.baomidou.mybatisplus" level="DEBUG"/>-->
+
+
+    <logger name="com.baomidou.mybatisplus" level="DEBUG"/>
+    <logger name="org.mybatis" level="DEBUG"/>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

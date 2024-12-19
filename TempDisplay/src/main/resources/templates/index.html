@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>index</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+  </style>
+  <script>
+    let isInitialLoad = true;
+    // 页面加载时立即调用一次
+    fetchData();
+
+    // 每隔 10 秒自动获取数据
+    setInterval(fetchData, 10000);
+
+    function fetchData() {
+      fetch('/index')
+              .then(response => response.text())
+              .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newDataList = doc.querySelector('tbody');
+                const oldDataList = document.querySelector('tbody');
+                if (isInitialLoad) {
+                  // 首次加载时直接更新
+                  oldDataList.innerHTML = newDataList.innerHTML;
+                  isInitialLoad = false;
+                } else {
+                  // 后续定时调用时可以进行更细致的处理，避免冲突
+                  // 例如，检查新数据是否与旧数据不同，再决定是否更新
+                  if (!isSameData(oldDataList, newDataList)) {
+                    oldDataList.innerHTML = newDataList.innerHTML;
+                  }
+                }
+              })
+              .catch(error => {
+                console.error('Error fetching DataStreams:', error);
+              });
+    }
+
+    function isSameData(oldList, newList) {
+      // 比较两个列表是否相同的逻辑，可以根据实际情况实现
+      // 例如，比较列表项的数量、内容等
+      return oldList.innerHTML === newList.innerHTML;
+    }
+  </script>
+</head>
+<body>
+<h1>Data List</h1>
+<table id="dataTable">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Update At</th>
+    <th>Current Value</th>
+  </tr>
+  </thead>
+  <tbody>
+  <!-- Thymeleaf will populate this table body -->
+  <tr th:each="item : ${dataList}" id="row-${item.id}">
+    <td th:text="${item.id}"></td>
+    <td th:text="${item.update_at}"></td>
+    <td th:text="${item.current_value}"></td>
+  </tr>
+  </tbody>
+</table>
+</body>
+</html>
