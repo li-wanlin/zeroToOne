@@ -69,7 +69,7 @@ public class LoginController {
     }
 
     @PostMapping("/refresh")
-    public RefreshResponseVo refresh(@RequestHeader("Refresh-Token") String refreshToken){
+    public RefreshResponseVo refresh(@RequestHeader("RefreshToken") String refreshToken){
         refreshLock.lock();
 
         Meta meta = new Meta();

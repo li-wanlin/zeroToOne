@@ -1,6 +1,7 @@
 package com.jnl.config;
 
 import com.jnl.Interceptor.ContextPathInterceptor;
+import com.jnl.Interceptor.DataLoggingInterceptor;
 import com.jnl.Interceptor.JwtInterceptor;
 import com.jnl.Interceptor.RequestLoggingInterceptor;
 import org.slf4j.Logger;
@@ -26,6 +27,8 @@ public class WebConfig  implements WebMvcConfigurer {
     @Resource
     RequestLoggingInterceptor requestLoggingInterceptor;
 
+
+
     public WebConfig(){
         logger.info("WebConfig is initialized.");
     }
@@ -43,6 +46,10 @@ public class WebConfig  implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        //将token身份验证组件注册到拦截器中，开发调试时关闭
+/*        registry.addInterceptor(jwtInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/JNLProgram/loginByName","/JNLProgram/refresh","/JNLProgram/logout");*/
 
 
         //上下文拦截器，目前没用
@@ -52,9 +59,7 @@ public class WebConfig  implements WebMvcConfigurer {
         registry.addInterceptor(requestLoggingInterceptor)
                 .addPathPatterns("/**");
 
-        //将token身份验证组件注册到拦截器中，开发调试时关闭
-/*        registry.addInterceptor(jwtInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns("/JNLProgram/loginByName","/JNLProgram/users/refresh","/JNLProgram/logout");*/
+
+
     }
 }

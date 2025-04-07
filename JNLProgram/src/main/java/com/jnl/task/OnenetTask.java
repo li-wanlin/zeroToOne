@@ -1,19 +1,27 @@
 package com.jnl.task;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnl.config.IoTConfig;
+import com.jnl.entity.OnenetData;
+import com.jnl.sevice.OnenetDataService;
+import com.jnl.sevice.impl.OnenetMessageParserService;
 import com.jnl.utils.AESBase64Utils;
 import com.jnl.utils.DateLocalUtils;
-import com.jnl.vo.onenetVo.IoTConsumer;
-import com.jnl.vo.onenetVo.IoTMessage;
+import com.jnl.vo.onenetVo.*;
 import io.netty.util.internal.StringUtil;
 import org.apache.pulsar.client.api.MessageId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -22,9 +30,15 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-//@Component
+@Component
 public class OnenetTask {
+
+    @Resource
+    OnenetDataService onenetDataService;
+
 
     private final Executor asyncExecutor;
 
@@ -39,17 +53,16 @@ public class OnenetTask {
     private static  String iotSecretKey="0e03e44c7d1840009aef3cbfe69638ad"; //0e03e44c7d1840009aef3cbfe69638ad
 
     //TODO 订阅名称
-    private static  String iotSubscriptionName="VF4ZMDRetitkUoYW5551-sub2"; //VF4ZMDRetitkUoYW5551-productJava,VF4ZMDRetitkUoYW5551-sub2
+    private static  String iotSubscriptionName="VF4ZMDRetitkUoYW5551-productJava"; //VF4ZMDRetitkUoYW5551-productJava,VF4ZMDRetitkUoYW5551-sub2
 
     //用于控制是否接收消息
     private  CountDownLatch latch = new CountDownLatch(0);
 
-    //用于存放数据的阻塞队列
-    private final LinkedBlockingDeque<String> messageDeque = new LinkedBlockingDeque<>();
+/*    //用于存放数据的阻塞队列
+    private final LinkedBlockingDeque<OnenetMsg> messageDeque = new LinkedBlockingDeque<>();
 
 
-    //用于存放将要处理的数据
-    private static  List<String> messageList;
+
 
 
     //用来控制条件循环
@@ -65,17 +78,31 @@ public class OnenetTask {
     private static final int MAX_QUEUE_SIZE = 500;
 
     //线程休眠时间（毫秒）
-    private static final long SLEEP_TIME = 10;
+    private static final long SLEEP_TIME = 10;*/
 
 
-    public OnenetTask(@Qualifier("asyncExecutor") Executor asyncExecutor) {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+
+    @Autowired
+    public OnenetTask(@Qualifier("asyncExecutor") Executor asyncExecutor,
+                      OnenetDataService onenetDataService) {
         this.asyncExecutor = asyncExecutor;
+        this.onenetDataService = onenetDataService;
+        logger.info("onenetDataService is null: {}", onenetDataService == null);
     }
 
 
-    //@PostConstruct
-    //@Async("asyncExecutor")
-    public void OnenetAPI(String iotAccessId, String iotSecretKey,String iotSubscriptionName){
+/*    public OnenetTask(@Qualifier("asyncExecutor") Executor asyncExecutor) {
+        this.asyncExecutor = asyncExecutor;
+    }*/
+
+
+
+    @Async("asyncExecutor")
+    @PostConstruct
+    public void OnenetAPI(){
         try{
             if (StringUtil.isNullOrEmpty(iotAccessId)) {
                 logger.error("iotAccessId is null,please input iotAccessId");
@@ -115,7 +142,7 @@ public class OnenetTask {
                     .iotSecretKey(iotSecretKey)
                     .subscriptionName(iotSubscriptionName)
                     .iotMessageListener(message -> {
-                        asyncExecutor.execute(() -> {
+                        //asyncExecutor.execute(() -> {
                             try {
                                 latch.await();
                                 MessageId msgId = message.getMessageId();
@@ -127,27 +154,66 @@ public class OnenetTask {
                                         msgId, publishTime, payload);
                                 logger.info("^^^^^^^^^^^^^^^^");
                                 logger.info("IOT originalMsg:{}", originalMsg);
-                                parseMessage(originalMsg);
+
+
+                                onenetDataService.parseMessage(originalMsg);
+
+                                //parseMessage(originalMsg);
+/*                                OnenetMsg onenetMsg = objectMapper.readValue(originalMsg, OnenetMsg.class);
+                                messageDeque.put(onenetMsg);
+                                logger.info("成功加入队列");*/
                             } catch (Exception e) {
                                 logger.error("Error processing message", e);
                             }
-                        });
+                        //});
                     }).build();
-            iotConsumer.run();
+
+                iotConsumer.run();
+
+
+
         }catch (Exception e){
             logger.error("onenet已停止获取数据,时间为:{}", DateLocalUtils.getGiveFormatNow("yyyy-MM-dd HH:mm:ss"));
         }
     }
 
 
+/*    @Scheduled(fixedRate = 1000 * 2)
+    @Async("asyncExecutor")
+    //@PostConstruct
+    public void parseMessage(){
+
+        logger.info("当前线程123：{}",Thread.currentThread().getName());
+
+        if (messageDeque.size() == 0){
+            return;
+        }
+        logger.info("当前线程：{}",Thread.currentThread().getName());
+        atomic.set(false);
+        List<OnenetMsg> messageList = new ArrayList<OnenetMsg>(messageDeque);
+        messageDeque.clear();
+        parseToObj(messageList);
+        atomic.set(true);
+    }*/
 
 
-    public void parseMessage(String msg){
+
+
+
+
+
+/*    public void parseMessage(String msg){
         try{
+
+            logger.info("进入消息判断：{}",msg);
 
             //用于记录进入消息解析的起始时间
             Long startTime = DateLocalUtils.getNowLong();
-            messageDeque.put(msg);
+            List<OnenetMsg> messageList = new ArrayList<OnenetMsg>();
+
+            OnenetMsg onenetMsg = objectMapper.readValue(msg, OnenetMsg.class);
+
+            messageDeque.put(onenetMsg);
             //用于记录双向队列的容量
             int startSize = messageDeque.size();
 
@@ -168,10 +234,12 @@ public class OnenetTask {
                     latch = new CountDownLatch(1);
                     atomic.set(false);
 
-                    messageList = new ArrayList<String>(messageDeque);
+                    messageList = new ArrayList<OnenetMsg>(messageDeque);
 
                     //清空双向队列，为下次接收消息做准备
                     messageDeque.clear();
+                    //TimeUnit.MILLISECONDS.sleep(10000);
+                    logger.info("通过第一个判断出去");
                     break;
                 }
 
@@ -180,17 +248,18 @@ public class OnenetTask {
                     latch = new CountDownLatch(1);
                     atomic.set(false);
 
-                    messageList = new ArrayList<String>(messageDeque);
+                    messageList = new ArrayList<OnenetMsg>(messageDeque);
 
 
                     //清空双向队列，为下次接收消息做准备
                     messageDeque.clear();
+                    //TimeUnit.MILLISECONDS.sleep(10000);
+                    logger.info("通过第二个判断出去");
                     break;
                 }
 
                 //上述条件均不满足，说明10毫秒内有新消息过来，更新双向队列容量，为下次循环判断做准备
                 startSize = messageDeque.size();
-
 
 
             }
@@ -200,22 +269,10 @@ public class OnenetTask {
             if (messageList.size() > 0){
                 //parseToObj(messageList);
 
+                logger.info("当前线程：{}",Thread.currentThread().getName());
+
+
                 parseToObj(messageList);
-
-                System.out.println("可以停止了");
-                System.out.println("*******************************");
-                System.out.println("*******************************");
-                System.out.println("*******************************");
-                System.out.println("*******************************");
-                System.out.println("*******************************");
-                System.out.println("*******************************");
-                System.out.println("*******************************");
-                System.out.println("*******************************");
-
-
-                TimeUnit.MILLISECONDS.sleep(100000);
-
-
 
 
                 //数据转换结束，将条件恢复
@@ -225,7 +282,7 @@ public class OnenetTask {
                 latch.countDown();
             }
         }catch (Exception e){
-            logger.error("在条件循环过程中发生错误，无法解决的问题，请忽略",e);
+            logger.error("在条件循环过程中发生错误，无法解决的问题，请忽略:{}",msg,e);
             latch.countDown();
             atomic.set(true);
         }
@@ -234,11 +291,56 @@ public class OnenetTask {
 
 
 
-    public void parseToObj(List<String> messages){
+    public void parseToObj(List<OnenetMsg> messages){
         //开始进行解析存储,以设备为维度，时间从远到近
 
+        logger.info("进行消息处理:{}",JSON.toJSONString(messages));
 
-    }
+        List<OnenetBase> pendingList = messages.stream()
+                .map(OnenetMsg::getSubData)
+                .filter(onenetSubData -> "device_1".equals(onenetSubData.getDeviceName()))
+                .map(OnenetSubData::getParams)
+                .map(OnenetParams::getCsq)
+                .collect(Collectors.toList());
+
+
+        List<OnenetData> onenetList = new ArrayList<>(pendingList.size());
+
+        IntStream.range(0,pendingList.size())
+                .parallel()
+                .forEachOrdered(index -> {
+                    OnenetBase onenetBase = pendingList.get(index);
+                    OnenetData onenetData = new OnenetData();
+                    onenetData.setTime(onenetBase.getTime());
+                    onenetList.add(onenetData);
+        });
+
+        //logger.info("onenetDataService is null: {}", onenetDataService == null);
+
+        //atomic.set(true);
+        //latch.countDown();
+
+
+        if (onenetList.size() == 0){
+            return;
+        }
+
+
+        logger.info("需要存储的数据:{}",JSON.toJSONString(onenetList));
+
+        boolean saveBatch = onenetDataService.saveBatch(onenetList);
+
+
+
+        if (saveBatch){
+            logger.info("存储onenet数据成功：{}",DateLocalUtils.getGiveFormatNow("yyyy-MM-dd HH:mm:ss.SSS"));
+        }else {
+            logger.info("存储onenet数据失败：{}",DateLocalUtils.getGiveFormatNow("yyyy-MM-dd HH:mm:ss.SSS"));
+            logger.info("存储onenet数据失败d的数据为：{}",JSON.toJSONString(onenetList));
+        }
+
+
+    }*/
 
 
 }

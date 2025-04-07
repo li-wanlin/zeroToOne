@@ -76,6 +76,12 @@ mybatis-plus:
       logic-not-delete-value: 1 # 逻辑未删除值
 
 
+# 图片存储路径
+image:
+  upload:
+    path: "D:\\code\\uploadImages"
+  #  path: static/images/
+
 #日志级别由低到高：TRACE、DEBUG、INFO、WARN、ERROR、FATAL
 logging:
   level:

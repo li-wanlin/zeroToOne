@@ -51,7 +51,10 @@ public class JwtInterceptor implements HandlerInterceptor {
         //获取在客户端存储的原始accessToken
         String accessToken = request.getHeader("Authorization");
         if (accessToken == null || !accessToken.startsWith("Bearer ")){
-            sendErrorResponse(response,HttpStatus.FORBIDDEN,"Forbidden");
+            //sendErrorResponse(response,HttpStatus.FORBIDDEN,"Forbidden");
+
+            sendErrorResponse(response,HttpStatus.PROXY_AUTHENTICATION_REQUIRED,"Proxy Authentication Required");
+
             logger.info("accessToken数据缺失");
             return false;
         }
@@ -170,9 +173,10 @@ public class JwtInterceptor implements HandlerInterceptor {
     }
 
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
-        response.setStatus(status.value());
-        Map<String, String> errorResponse = new HashMap<>();
+        response.setStatus(HttpStatus.OK.value());
+        Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("message",message);
+        errorResponse.put("status",status.value());
         response.getWriter().write(JSON.toJSONString(errorResponse));
     }
 

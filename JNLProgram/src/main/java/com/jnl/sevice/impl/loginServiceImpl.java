@@ -205,7 +205,7 @@ public class loginServiceImpl implements loginService {
         //3.若刷新token可以解析，每次请求过来，使用用户信息在数据库查询进行比对。如果是老token且未超过容忍时间，将两新token返回给客户端
         //4.若刷新token可以解析，每次请求过来，使用用户信息在数据库查询进行比对。如果是老token且超过容忍时间，返回刷新token过期
         List<TokenCheck> oldRefreshList = userTokenList.stream()
-                .filter(tokenCheck -> tokenCheck.getOldRefreshToken().equals(refreshToken))
+                .filter(tokenCheck -> refreshToken.equals(tokenCheck.getOldRefreshToken()))
                 .collect(Collectors.toList());
         if (oldRefreshList.size() > 0){
             TokenCheck oldRefresh = oldRefreshList.get(0);
@@ -219,11 +219,11 @@ public class loginServiceImpl implements loginService {
                 return refreshResponseVo;
             }
 
-            meta.setStatus(200);
+            meta.setStatus(204);  //2025.04.03：返回204，容忍时间内的刷新不在返回数据
             meta.setMsg("Refresh success");
 
-            data.setAccessToken(oldRefresh.getNewAccessToken());
-            data.setRefreshToken(oldRefresh.getNewRefreshToken());
+/*            data.setAccessToken(oldRefresh.getNewAccessToken());
+            data.setRefreshToken(oldRefresh.getNewRefreshToken());*/
 
             refreshResponseVo.setMeta(meta);
             refreshResponseVo.setData(data);
@@ -247,8 +247,8 @@ public class loginServiceImpl implements loginService {
         List<TokenCheck> globalCheckList = globalTokenCheckList.getGlobalCheckList();
         Date now = new Date();
         List<TokenCheck> checkList = globalCheckList.stream()
-                .filter(tokenCheck -> tokenCheck.getUsername().equals(username))
-                .filter(tokenCheck -> tokenCheck.getNewAccessToken().equals(accessToken) || tokenCheck.getOldAccessToken().equals(accessToken))
+                .filter(tokenCheck -> username.equals(tokenCheck.getUsername()))
+                .filter(tokenCheck -> accessToken.equals(tokenCheck.getNewAccessToken()) || accessToken.equals(tokenCheck.getOldAccessToken()))
                 .collect(Collectors.toList());
         if (checkList.size() > 0){
             TokenCheck tokenCheck = checkList.get(0);

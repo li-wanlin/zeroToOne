@@ -9,9 +9,11 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
 
+@Component
 public class DataLoggingInterceptor implements InnerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(DataLoggingInterceptor.class);
