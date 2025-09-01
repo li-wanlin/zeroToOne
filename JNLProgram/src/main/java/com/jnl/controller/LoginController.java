@@ -1,9 +1,10 @@
 package com.jnl.controller;
 
 
-import com.jnl.sevice.impl.loginServiceImpl;
+import com.jnl.service.impl.loginServiceImpl;
 import com.jnl.vo.functionVo.GlobalTokenCheckList;
 import com.jnl.vo.functionVo.Meta;
+import com.jnl.vo.loginVo.LogRequest;
 import com.jnl.vo.loginVo.LoginData;
 import com.jnl.vo.loginVo.LoginResponseVo;
 import com.jnl.vo.loginVo.LogoutResponseVo;
@@ -11,16 +12,9 @@ import com.jnl.vo.tokenVo.RefreshDataVo;
 import com.jnl.vo.tokenVo.RefreshResponseVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 @RestController
@@ -37,7 +31,7 @@ public class LoginController {
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     @PostMapping ("/loginByName")
-    public LoginResponseVo loginByName(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password){
+    public LoginResponseVo loginByName(@RequestBody LogRequest request){
         //未加上token版本
 /*        loginResponseVo loginResponseVo = new loginResponseVo();
         data data = new data();
@@ -52,6 +46,10 @@ public class LoginController {
         logger.info("此为登录功能方便打印:");
         loginResponseVo = loginService.loginByName(username,password);
         return loginResponseVo;*/
+
+        String username = request.getUsername();
+        String password = request.getPassword();
+
 
         //加上token版本
         if (username == null || password == null){
@@ -104,10 +102,11 @@ public class LoginController {
     }
 
     @PostMapping("/logout")
-    public LogoutResponseVo logout(@RequestHeader("Authorization") String auth, @RequestParam(value = "username") String username){
+    public LogoutResponseVo logout(@RequestHeader("Authorization") String auth, @RequestBody LogRequest request){
+        String username = request.getUsername();
         Meta meta = new Meta();
         LogoutResponseVo logoutResponseVo = new LogoutResponseVo();
-        if (username == null || auth == null || !auth.startsWith("Bearer ")){
+        if (username == null || username.equals("") || auth == null || !auth.startsWith("Bearer ")){
             meta.setStatus(400);
             meta.setMsg("Username or token cannot be empty");
 

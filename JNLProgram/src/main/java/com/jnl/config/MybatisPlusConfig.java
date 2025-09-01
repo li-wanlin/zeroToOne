@@ -1,7 +1,9 @@
 package com.jnl.config;
 
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import com.jnl.Interceptor.DataLoggingInterceptor;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +41,7 @@ public class MybatisPlusConfig {
         //添加插件
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new DataLoggingInterceptor());
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
         factoryBean.setPlugins(interceptor);
 
         Resource[] mapperLocations = new PathMatchingResourcePatternResolver().getResources("classpath*:mapper/**/*.xml");
@@ -46,4 +49,6 @@ public class MybatisPlusConfig {
 
         return factoryBean;
     }
+
+
 }

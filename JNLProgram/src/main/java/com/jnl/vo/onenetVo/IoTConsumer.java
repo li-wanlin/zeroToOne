@@ -28,7 +28,10 @@ public class IoTConsumer {
             throw new IllegalStateException("iotMessageListener must be initialized");
         }
         PulsarClient client = PulsarClient.builder().serviceUrl(brokerServerUrl).allowTlsInsecureConnection(true)
-                .authentication(new IoTAuthentication(iotAccessId, iotSecretKey)).build();
+                .authentication(new IoTAuthentication(iotAccessId, iotSecretKey))
+                .allowTlsInsecureConnection(true) // 开发环境临时使用
+                .enableTlsHostnameVerification(true) // 禁用主机名验证（仅开发环境）
+                .build();
         Consumer<String> consumer = client.newConsumer(Schema.STRING).topic(String.format("%s/iot/event", iotAccessId))
                 .subscriptionName(subscriptionName).subscriptionType(SubscriptionType.Failover)
                 .autoUpdatePartitions(Boolean.FALSE).subscribe();

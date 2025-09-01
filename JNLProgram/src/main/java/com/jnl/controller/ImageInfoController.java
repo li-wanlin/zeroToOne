@@ -1,29 +1,30 @@
 package com.jnl.controller;
 
 import com.jnl.entity.ImagesInfo;
-import com.jnl.sevice.impl.ImagesInfoServiceImpl;
-import com.jnl.vo.imageInfoVo.ImageResponseVo;
+import com.jnl.service.impl.ImagesInfoServiceImpl;
+import com.jnl.vo.functionVo.Meta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RestController
 public class ImageInfoController {
 
 
     @Value("${image.upload.path}")
-    private String uploadPath;
+    private String imageUploadPath;
+
+
+
 
     @Resource
     ImagesInfoServiceImpl imagesInfoService;
@@ -32,87 +33,93 @@ public class ImageInfoController {
 
 
     @PostMapping("/image/uploadImage")
-    public String uploadImage(@RequestParam("image") MultipartFile file){
-        if (file.isEmpty()) {
-            return "The file is empty";
-        }
-        try {
-            String fileName = file.getOriginalFilename();
-            //用相对路径，后发现项目打包后会清空数据，故需用绝对路径下的外部目录
-/*            ClassPathResource resource = new ClassPathResource("");
-            File rootDir = resource.getFile();*/
-            Path filePath = Paths.get(uploadPath, fileName);
-            File directory = filePath.getParent().toFile();
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            Files.write(filePath, file.getBytes());
+    public Meta uploadImage(@RequestParam("image") MultipartFile file){
 
-            ImagesInfo imagesInfo = new ImagesInfo();
-            imagesInfo.setFileName(fileName);
-            imagesInfo.setFilePath(filePath.toString());
-            boolean save = imagesInfoService.save(imagesInfo);
-            if (save){
-                return "upload success";
-            }else {
-                return "upload failed";
+        Meta meta = new Meta();
+        try{
+
+            ImagesInfo imagesInfo = imagesInfoService.uploadImage(file);
+            if (imagesInfo == null || imagesInfo.getFilePath() == null){
+                meta.setStatus(400);
+                meta.setMsg("图片上传失败，请检查");
+                return meta;
             }
-        } catch (Exception e) {
-            logger.error("upload failed",e);
-            return "upload failed";
+            meta.setStatus(200);
+            meta.setMsg("图片上传成功");
+            return meta;
+
+        }catch (Exception e){
+            logger.error("上传图片时发生异常",e);
         }
+
+        meta.setStatus(400);
+        meta.setMsg("图片上传失败，请检查");
+        return meta;
     }
 
 
-    @GetMapping("/image/downloadImage")
-    @ResponseBody
-    public void downloadImage(HttpServletResponse response){
+    @GetMapping("/image/downloadImage/{imageName}")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadImage(@PathVariable String imageName){
 
+        //暂时根据图片名称去对应位置下载图片
         try {
-            ImagesInfo imagesInfo = imagesInfoService.getById(6);
-            Path filePath = Paths.get(imagesInfo.getFilePath());
-            byte[] imageBytes = Files.readAllBytes(filePath);
+            ImagesInfo imagesInfo = imagesInfoService.downloadImage(imageName);
 
-            // 设置响应头信息
-            // 设置 Content-Type 头
-            response.setContentType(this.getContentType(filePath));
+            if (imagesInfo == null || imagesInfo.getId() == null){
+                return ResponseEntity.notFound().build();
+            }
+
+            File file = new File(imagesInfo.getFilePath());
+            org.springframework.core.io.Resource resource = new FileSystemResource(file);
+
+
+            //设置响应头
+            HttpHeaders headers = new HttpHeaders();
+
+            // 设置 Content-Disposition 头，指定文件以附件形式下载
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; imageName=" + imagesInfo.getFileName());
+
+
+            //设置Content-Type 头
+            headers.setContentType(this.getContentType(imagesInfo.getFileName()));
+
             // 设置 Content-Length 头
-            response.setContentLength(imageBytes.length);
-            // 设置 Cache-Control 头
-            response.setHeader("Cache-Control", "max-age=3600");
+            headers.setContentLength(file.length());
 
-            // 将图片字节数组写入响应输出流
-            response.getOutputStream().write(imageBytes);
-            response.getOutputStream().flush();
-            response.getOutputStream().close();
+            //设置 Cache-Control 头,缓存时间
+            Integer cache = 60 * 60 * 24 * 30;
+            headers.setCacheControl("public, max-age=" + cache.toString());
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(resource);
 
         } catch (Exception e) {
             logger.error("downloadImage failed",e);
-            // 设置响应状态码为 500
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            // 设置响应状态码为 404
+            return ResponseEntity.notFound().build();
         }
     }
 
 
     //根据文件扩展名获取Content-Type
-    private String getContentType(Path filePath){
+    private MediaType getContentType(String fileName){
         try{
-            String fileName = filePath.getFileName().toString();
             String fileExtension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
             switch(fileExtension){
                 case "jpg":
                 case "jpeg":
-                    return MediaType.IMAGE_JPEG_VALUE;
+                    return MediaType.IMAGE_JPEG;
                 case "png":
-                    return MediaType.IMAGE_PNG_VALUE;
+                    return MediaType.IMAGE_PNG;
                 case "gif":
-                    return MediaType.IMAGE_GIF_VALUE;
+                    return MediaType.IMAGE_GIF;
                 default:
-                    return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                    return MediaType.APPLICATION_OCTET_STREAM;
             }
         }catch (Exception e){
             logger.error("获取图片扩展名时发生错误",e);
-            return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            return MediaType.APPLICATION_OCTET_STREAM;
         }
     }
 

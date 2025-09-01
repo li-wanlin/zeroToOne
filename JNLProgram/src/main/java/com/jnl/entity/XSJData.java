@@ -55,4 +55,21 @@ public class XSJData implements Serializable {
 
     @TableField(value = "reserves4")
     String reserves4;
+
+
+    /**
+     * 当日累积电量
+     */
+    @TableField(exist = false)
+    Integer accrue;
+
+
+    /**
+     * 当前库容
+     */
+    @TableField(exist = false)
+    Integer capacity;
+
+
+
 }

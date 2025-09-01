@@ -1,0 +1,31 @@
+package com.jnl.vo.fourPreventVo;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class WarnUnit implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    Integer orderNum;
+
+    String updateTime;
+
+    String location;
+
+    String device;
+
+    Double monValue;
+
+    String limitType;
+
+    String limitState;
+
+
+}

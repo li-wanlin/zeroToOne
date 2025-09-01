@@ -30,6 +30,9 @@ public class UserInfo implements Serializable {
     @TableField(value ="password")
     String password;
 
+    @TableField(value = "lv")
+    Integer lv;
+
     @TableField(value ="mobile")
     String mobile;
 

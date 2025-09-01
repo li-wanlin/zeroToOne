@@ -17,5 +17,7 @@ public class LoginData {
 
     String refreshToken;
 
+    Integer lv;
+
 
 }

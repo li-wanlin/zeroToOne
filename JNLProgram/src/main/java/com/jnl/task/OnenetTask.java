@@ -1,50 +1,31 @@
 package com.jnl.task;
 
-import com.alibaba.fastjson.JSON;
+
 import com.alibaba.fastjson2.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnl.config.IoTConfig;
-import com.jnl.entity.OnenetData;
-import com.jnl.sevice.OnenetDataService;
-import com.jnl.sevice.impl.OnenetMessageParserService;
+import com.jnl.service.impl.OnenetMessageParserService;
 import com.jnl.utils.AESBase64Utils;
 import com.jnl.utils.DateLocalUtils;
 import com.jnl.vo.onenetVo.*;
 import io.netty.util.internal.StringUtil;
-import org.apache.pulsar.client.api.MessageId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
+
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Component
 public class OnenetTask {
 
     @Resource
-    OnenetDataService onenetDataService;
-
-
-    private final Executor asyncExecutor;
+    OnenetMessageParserService onenetMessageParserService;
 
     private static final Logger logger = LoggerFactory.getLogger(OnenetTask.class);
-
-
 
 
     //TODO need to set iotAccessId 消费组ID
@@ -55,66 +36,28 @@ public class OnenetTask {
     //TODO 订阅名称
     private static  String iotSubscriptionName="VF4ZMDRetitkUoYW5551-productJava"; //VF4ZMDRetitkUoYW5551-productJava,VF4ZMDRetitkUoYW5551-sub2
 
+
     //用于控制是否接收消息
-    private  CountDownLatch latch = new CountDownLatch(0);
+    private CountDownLatch latch = new CountDownLatch(0);
 
-/*    //用于存放数据的阻塞队列
-    private final LinkedBlockingDeque<OnenetMsg> messageDeque = new LinkedBlockingDeque<>();
-
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
 
 
 
-    //用来控制条件循环
-    private static final AtomicBoolean atomic = new AtomicBoolean(true);
-
-    //用于记录程序启动后，只接收消息但不处理的放空时间
-    private static final long HANDLE_MSG_TIME = 13500;
-
-    //消息处理的最大时间（毫秒）
-    private static final long MAX_PROCESSING_TIME = 2000;
-
-    //阻塞队列的最大容量
-    private static final int MAX_QUEUE_SIZE = 500;
-
-    //线程休眠时间（毫秒）
-    private static final long SLEEP_TIME = 10;*/
 
 
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-
-    @Autowired
-    public OnenetTask(@Qualifier("asyncExecutor") Executor asyncExecutor,
-                      OnenetDataService onenetDataService) {
-        this.asyncExecutor = asyncExecutor;
-        this.onenetDataService = onenetDataService;
-        logger.info("onenetDataService is null: {}", onenetDataService == null);
-    }
-
-
-/*    public OnenetTask(@Qualifier("asyncExecutor") Executor asyncExecutor) {
-        this.asyncExecutor = asyncExecutor;
-    }*/
-
-
-
-    @Async("asyncExecutor")
-    @PostConstruct
+    @Async("backgroundTaskExecutor")
     public void OnenetAPI(){
         try{
             if (StringUtil.isNullOrEmpty(iotAccessId)) {
                 logger.error("iotAccessId is null,please input iotAccessId");
-                System.exit(1);
             }
             if (StringUtil.isNullOrEmpty(iotSecretKey)) {
                 logger.error("iotSecretKey is null,please input iotSecretKey");
-                System.exit(1);
             }
             if (StringUtil.isNullOrEmpty(iotSubscriptionName)) {
                 logger.error("iotSubscriptionName is null,please input iotSubscriptionName");
-                System.exit(1);
             }
 
             /**
@@ -132,44 +75,34 @@ public class OnenetTask {
              * 用目前框架mybatis-plus框架直接插入一个容量为1000的list，所需约600毫秒
              */
 
-            AtomicReference<String> dataMsg = null;
+                //TODO 建议收到消息后将消息转到中间件后立即ACK。避免消息量过大导致消息过期
+                IoTConsumer iotConsumer = IoTConsumer.IOTConsumerBuilder.anIOTConsumer()
+                        .brokerServerUrl(IoTConfig.brokerSSLServerUrl)
+                        .iotAccessId(iotAccessId)
+                        .iotSecretKey(iotSecretKey)
+                        .subscriptionName(iotSubscriptionName)
+                        .iotMessageListener(message -> {
 
-
-            //TODO 建议收到消息后将消息转到中间件后立即ACK。避免消息量过大导致消息过期
-            IoTConsumer iotConsumer = IoTConsumer.IOTConsumerBuilder.anIOTConsumer()
-                    .brokerServerUrl(IoTConfig.brokerSSLServerUrl)
-                    .iotAccessId(iotAccessId)
-                    .iotSecretKey(iotSecretKey)
-                    .subscriptionName(iotSubscriptionName)
-                    .iotMessageListener(message -> {
-                        //asyncExecutor.execute(() -> {
                             try {
                                 latch.await();
-                                MessageId msgId = message.getMessageId();
-                                long publishTime = message.getPublishTime();
+                                //MessageId msgId = message.getMessageId();
+                                //long publishTime = message.getPublishTime();
                                 String payload = new String(message.getData());
                                 IoTMessage iotMessage = JSONObject.parseObject(payload, IoTMessage.class);
                                 String originalMsg = AESBase64Utils.decrypt(iotMessage.getData(), iotSecretKey.substring(8, 24));
-                                logger.info("IOT consume message======>>>>>>> messageId={}, publishTime={},  payload={}",
-                                        msgId, publishTime, payload);
-                                logger.info("^^^^^^^^^^^^^^^^");
-                                logger.info("IOT originalMsg:{}", originalMsg);
+                                //logger.info("IOT originalMsg^^^^^^^:{}", originalMsg);
 
-
-                                onenetDataService.parseMessage(originalMsg);
-
-                                //parseMessage(originalMsg);
-/*                                OnenetMsg onenetMsg = objectMapper.readValue(originalMsg, OnenetMsg.class);
-                                messageDeque.put(onenetMsg);
-                                logger.info("成功加入队列");*/
+                                onenetMessageParserService.parseMessage(originalMsg);
                             } catch (Exception e) {
                                 logger.error("Error processing message", e);
                             }
-                        //});
-                    }).build();
 
-                iotConsumer.run();
+                        }).build();
 
+
+                while (running.get()){
+                    iotConsumer.run();
+                }
 
 
         }catch (Exception e){
@@ -178,169 +111,10 @@ public class OnenetTask {
     }
 
 
-/*    @Scheduled(fixedRate = 1000 * 2)
-    @Async("asyncExecutor")
-    //@PostConstruct
-    public void parseMessage(){
-
-        logger.info("当前线程123：{}",Thread.currentThread().getName());
-
-        if (messageDeque.size() == 0){
-            return;
-        }
-        logger.info("当前线程：{}",Thread.currentThread().getName());
-        atomic.set(false);
-        List<OnenetMsg> messageList = new ArrayList<OnenetMsg>(messageDeque);
-        messageDeque.clear();
-        parseToObj(messageList);
-        atomic.set(true);
-    }*/
-
-
-
-
-
-
-
-/*    public void parseMessage(String msg){
-        try{
-
-            logger.info("进入消息判断：{}",msg);
-
-            //用于记录进入消息解析的起始时间
-            Long startTime = DateLocalUtils.getNowLong();
-            List<OnenetMsg> messageList = new ArrayList<OnenetMsg>();
-
-            OnenetMsg onenetMsg = objectMapper.readValue(msg, OnenetMsg.class);
-
-            messageDeque.put(onenetMsg);
-            //用于记录双向队列的容量
-            int startSize = messageDeque.size();
-
-
-            while(atomic.get()){
-
-                //循环休眠10毫秒，防止while循环空转
-                TimeUnit.MILLISECONDS.sleep(SLEEP_TIME);
-
-
-                //用于记录每次进入循环的时间
-                Long endTime = DateLocalUtils.getNowLong();
-                //用于进行条件判断
-                long diffTime = endTime - startTime;
-
-                //当循环时间经过2秒或双向队列的容量达到1000以上时，停止接收消息，并停止其余循环后，终止循环
-                if (diffTime >= MAX_PROCESSING_TIME || messageDeque.size() >= MAX_QUEUE_SIZE){
-                    latch = new CountDownLatch(1);
-                    atomic.set(false);
-
-                    messageList = new ArrayList<OnenetMsg>(messageDeque);
-
-                    //清空双向队列，为下次接收消息做准备
-                    messageDeque.clear();
-                    //TimeUnit.MILLISECONDS.sleep(10000);
-                    logger.info("通过第一个判断出去");
-                    break;
-                }
-
-                //当循环过程中时间超过50毫秒内无新消息过来时，停止接收消息，并停止其余循环后，终止循环
-                if (messageDeque.size() == startSize){
-                    latch = new CountDownLatch(1);
-                    atomic.set(false);
-
-                    messageList = new ArrayList<OnenetMsg>(messageDeque);
-
-
-                    //清空双向队列，为下次接收消息做准备
-                    messageDeque.clear();
-                    //TimeUnit.MILLISECONDS.sleep(10000);
-                    logger.info("通过第二个判断出去");
-                    break;
-                }
-
-                //上述条件均不满足，说明10毫秒内有新消息过来，更新双向队列容量，为下次循环判断做准备
-                startSize = messageDeque.size();
-
-
-            }
-
-
-            //将满足上述条件的双向队列，取离当前时间最近的两条数据（因为一个设备一条数据，一个完整的消息由两条分开的消息组成）
-            if (messageList.size() > 0){
-                //parseToObj(messageList);
-
-                logger.info("当前线程：{}",Thread.currentThread().getName());
-
-
-                parseToObj(messageList);
-
-
-                //数据转换结束，将条件恢复
-                messageList.clear();
-                atomic.set(true);
-                //开启阻塞的消费者线程，开始接收消息
-                latch.countDown();
-            }
-        }catch (Exception e){
-            logger.error("在条件循环过程中发生错误，无法解决的问题，请忽略:{}",msg,e);
-            latch.countDown();
-            atomic.set(true);
-        }
-
+    @PreDestroy
+    public void stopTask(){
+        logger.info("准备关闭onenetTask");
+        running.set(false);
     }
-
-
-
-    public void parseToObj(List<OnenetMsg> messages){
-        //开始进行解析存储,以设备为维度，时间从远到近
-
-        logger.info("进行消息处理:{}",JSON.toJSONString(messages));
-
-        List<OnenetBase> pendingList = messages.stream()
-                .map(OnenetMsg::getSubData)
-                .filter(onenetSubData -> "device_1".equals(onenetSubData.getDeviceName()))
-                .map(OnenetSubData::getParams)
-                .map(OnenetParams::getCsq)
-                .collect(Collectors.toList());
-
-
-        List<OnenetData> onenetList = new ArrayList<>(pendingList.size());
-
-        IntStream.range(0,pendingList.size())
-                .parallel()
-                .forEachOrdered(index -> {
-                    OnenetBase onenetBase = pendingList.get(index);
-                    OnenetData onenetData = new OnenetData();
-                    onenetData.setTime(onenetBase.getTime());
-                    onenetList.add(onenetData);
-        });
-
-        //logger.info("onenetDataService is null: {}", onenetDataService == null);
-
-        //atomic.set(true);
-        //latch.countDown();
-
-
-        if (onenetList.size() == 0){
-            return;
-        }
-
-
-        logger.info("需要存储的数据:{}",JSON.toJSONString(onenetList));
-
-        boolean saveBatch = onenetDataService.saveBatch(onenetList);
-
-
-
-        if (saveBatch){
-            logger.info("存储onenet数据成功：{}",DateLocalUtils.getGiveFormatNow("yyyy-MM-dd HH:mm:ss.SSS"));
-        }else {
-            logger.info("存储onenet数据失败：{}",DateLocalUtils.getGiveFormatNow("yyyy-MM-dd HH:mm:ss.SSS"));
-            logger.info("存储onenet数据失败d的数据为：{}",JSON.toJSONString(onenetList));
-        }
-
-
-    }*/
-
 
 }

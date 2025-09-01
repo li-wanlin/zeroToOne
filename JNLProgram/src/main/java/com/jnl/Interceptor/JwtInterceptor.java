@@ -42,9 +42,39 @@ public class JwtInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         //设置免token界面
-        if (request.getRequestURI().endsWith("/JNLProgram/loginByName")
+/*        if (request.getRequestURI().endsWith("/JNLProgram/loginByName")
                 || request.getRequestURI().endsWith("/JNLProgram/refresh")
                 || request.getRequestURI().endsWith("/JNLProgram/logout")){
+            return true;
+        }*/
+
+        String requestURI = request.getRequestURI();
+
+        // 放行登录相关接口
+        if (requestURI.endsWith("/JNLProgram/loginByName")
+                || requestURI.endsWith("/JNLProgram/refresh")
+                || requestURI.endsWith("/JNLProgram/logout")) {
+            return true;
+        }
+
+        // 放行静态资源目录
+        if (requestURI.startsWith(request.getContextPath() + "/fg/")        // 匹配 /JNLProgram/fg/
+                || requestURI.startsWith(request.getContextPath() + "/css/")
+                || requestURI.startsWith(request.getContextPath() + "/fonts/")
+                || requestURI.startsWith(request.getContextPath() + "/js/")
+                || requestURI.startsWith(request.getContextPath() + "/img/")
+                || requestURI.startsWith(request.getContextPath() + "/imgs/")
+                || requestURI.startsWith(request.getContextPath() + "/models/")
+                || requestURI.startsWith(request.getContextPath() + "/display/")
+                || requestURI.startsWith(request.getContextPath() + "/pdfs/")
+                || requestURI.startsWith(request.getContextPath() + "/static/")) {
+            return true;
+        }
+
+        // 放行特定文件
+        if (requestURI.endsWith("/JNLProgram/config.js")
+                || requestURI.endsWith("/JNLProgram/favicon.ico")
+                || requestURI.endsWith("/JNLProgram/index.html")) {
             return true;
         }
 
@@ -53,15 +83,24 @@ public class JwtInterceptor implements HandlerInterceptor {
         if (accessToken == null || !accessToken.startsWith("Bearer ")){
             //sendErrorResponse(response,HttpStatus.FORBIDDEN,"Forbidden");
 
-            sendErrorResponse(response,HttpStatus.PROXY_AUTHENTICATION_REQUIRED,"Proxy Authentication Required");
+            sendErrorResponse(response,HttpStatus.PROXY_AUTHENTICATION_REQUIRED,"accessToken Required");
 
             logger.info("accessToken数据缺失");
             return false;
         }
 
+
         //开始token身份验证
         accessToken = accessToken.replace("Bearer ", "");
         String token = accessToken;
+
+
+
+        //开发测试用，后期需注释掉
+        if (accessToken.equals("lwl123456789")){
+            return true;
+        }
+
 
         //从payload中获取用户信息
         String[] parts = accessToken.split("\\.");
@@ -75,7 +114,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         String username = base64Vo.getSub();
         Long exp = base64Vo.getExp();
         if (username == null || username == "" || exp == null || exp == 0){
-            sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "Proxy Authentication Required");
+            sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "accessToken Required");
             return false;
         }
 
@@ -96,7 +135,7 @@ public class JwtInterceptor implements HandlerInterceptor {
 
                 //用户信息在tokencheck表中找不到对应数据,认定为假token
                 if (userTokenList.size() == 0){
-                    sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "Proxy Authentication Required");
+                    sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "accessToken Required");
                     return false;
                 }
 
@@ -106,7 +145,7 @@ public class JwtInterceptor implements HandlerInterceptor {
                         .filter(tokenCheck -> tokenCheck.getNewAccessToken().equals(token))
                         .collect(Collectors.toList());
                 if (newAccessToken.size() > 0){
-                    sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "Proxy Authentication Required");
+                    sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "accessToken Required");
                     return false;
                 }
 
@@ -121,7 +160,7 @@ public class JwtInterceptor implements HandlerInterceptor {
 
                     //老token时间超过过期时间+容忍时间，认定过期
                     if (nowTimestamp > exp){
-                        sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "Proxy Authentication Required");
+                        sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "accessToken Required");
                         return false;
                     }
 
@@ -132,7 +171,7 @@ public class JwtInterceptor implements HandlerInterceptor {
                 }
 
                 //本次请求既不是新token，也不是老token，返回过期
-                sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "Proxy Authentication Required");
+                sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "accessToken Required");
                 return false;
             }catch (Exception e){
                 logger.error("后续验证token逻辑出错",e);
@@ -163,7 +202,7 @@ public class JwtInterceptor implements HandlerInterceptor {
 
 
             //已过期，通知客户端发送刷新请求
-            sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "Proxy Authentication Required");
+            sendErrorResponse(response, HttpStatus.PROXY_AUTHENTICATION_REQUIRED, "accessToken Required");
             return false;
 
         }

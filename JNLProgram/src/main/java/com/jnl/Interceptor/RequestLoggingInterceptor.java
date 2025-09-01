@@ -1,6 +1,6 @@
 package com.jnl.Interceptor;
 
-import com.jnl.sevice.impl.RequestLoggingService;
+import com.jnl.service.impl.RequestLoggingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

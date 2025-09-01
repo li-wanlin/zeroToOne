@@ -24,7 +24,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+
+
+
+
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -35,11 +44,12 @@
             <artifactId>spring-boot-starter-logging</artifactId>
         </dependency>
 
-
         <dependency>
-            <groupId>org.springframework.amqp</groupId>
-            <artifactId>spring-rabbit</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -57,11 +67,11 @@
             <version>1.7.36</version>
         </dependency>
 
-<!--        <dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.2.11</version>
-        </dependency>-->
+        </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
@@ -95,14 +105,26 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.9</version>
+            <version>3.4.3</version>
         </dependency>
+
+<!--        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.9</version>
+        </dependency>-->
 
 
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter-test</artifactId>
-            <version>3.5.9</version>
+            <version>3.4.3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 
@@ -118,6 +140,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
         </dependency>
 
         <!-- json工具 -->
@@ -182,6 +210,21 @@
 
 
         <!-- onenet接口 -->
+<!--        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.93.Final</version> &lt;!&ndash; 与 Tomcat 内置版本一致 &ndash;&gt;
+        </dependency>-->
+
+<!--
+        <dependency>
+            <groupId>org.apache.pulsar</groupId>
+            <artifactId>pulsar-client-original</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+-->
+
+
         <dependency>
             <groupId>org.apache.pulsar</groupId>
             <artifactId>pulsar-client</artifactId>
@@ -192,6 +235,12 @@
             <artifactId>pulsar-client-tools</artifactId>
             <version>3.0.1</version>
         </dependency>
+
+
+
+
+
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -208,6 +257,94 @@
             <artifactId>fastjson</artifactId>
             <version>2.0.32</version>
         </dependency>
+
+
+
+
+        <!-- MATLAB 生成的主 JAR 包 -->
+<!--        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>ryc</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/ryc.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>dyc</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/dyc.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>hs1</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/hs1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>skw1</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/skw1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>skw2</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/skw2.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>sksw1</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/sksw1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>xajf</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/xajf.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>skfh</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/skfh.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.matlab</groupId>
+            <artifactId>hsyj</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/hsyj.jar</systemPath>
+        </dependency>
+
+
+        &lt;!&ndash; MATLAB Runtime 依赖 (R2017b 对应 9.3) &ndash;&gt;
+        <dependency>
+            <groupId>com.mathworks</groupId>
+            <artifactId>javabuilder</artifactId>
+            <version>9.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/javabuilder.jar</systemPath>
+        </dependency>-->
+
+
 
 
 
@@ -241,9 +378,11 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <!-- 如果没有该配置，热部署的devtools不生效 -->
-                    <fork>true</fork>
+<!--                    <fork>true</fork>-->
+                    <includeSystemScope>true</includeSystemScope>
                 </configuration>
             </plugin>
+
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -271,6 +410,57 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
+
+<!--            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <webResources>
+                        <resource>
+                            <directory>${project.basedir}/lib</directory>
+                            <targetPath>WEB-INF/lib</targetPath>
+                            <includes>
+                                <include>*.jar</include>
+                            </includes>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>-->
+
+<!--            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>io.netty</pattern>
+                                    <shadedPattern>com.jnl.shaded.io.netty</shadedPattern> &lt;!&ndash; 自定义重命名前缀 &ndash;&gt;
+                                </relocation>
+                            </relocations>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>-->
+
 
 
             <plugin>

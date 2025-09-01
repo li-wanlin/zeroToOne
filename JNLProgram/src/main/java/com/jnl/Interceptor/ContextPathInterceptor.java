@@ -15,19 +15,19 @@ public class ContextPathInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        logger.info("请求进入拦截器，原始URI：{}",request.getRequestURI());
+        //logger.info("请求进入拦截器，原始URI：{}",request.getRequestURI());
         String contextPath = request.getContextPath();
         String requestURI = request.getRequestURI();
 
-        logger.info("请求进入拦截器，原始contextPath:{}",contextPath);
-        logger.info("请求进入拦截器，原始requestURI:{}",requestURI);
+        //logger.info("请求进入拦截器，原始contextPath:{}",contextPath);
+        //logger.info("请求进入拦截器，原始requestURI:{}",requestURI);
 
-        logger.info("请求进入拦截器，原始！requestURI.startWiths(contextPath):{}",!requestURI.startsWith(contextPath));
+        //logger.info("请求进入拦截器，原始！requestURI.startWiths(contextPath):{}",!requestURI.startsWith(contextPath));
         //如果请求URI没有包含上下文路径，则添加上
         if (!requestURI.startsWith(contextPath)){
             String newURI = contextPath + requestURI;
             response.sendRedirect(newURI);
-            logger.info("添加上下文路径后，新的URI：{}",newURI);
+            //logger.info("添加上下文路径后，新的URI：{}",newURI);
             return false;
         }
 

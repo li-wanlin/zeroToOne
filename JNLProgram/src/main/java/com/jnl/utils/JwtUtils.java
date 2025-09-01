@@ -16,9 +16,9 @@ import java.util.Date;
 public class JwtUtils {
     private static final String ACCESS_SECRET_KEY = "zheshiwozijixiedeshenfenmiyaoyidingyaochaoguoguidingchangdu";
     private static final String REFRESH_SECRET_KEY = "zheshiwozijixiedeshuaxinmiyaoyidingyaochaoguoguidingchangdu";
-    private static final long ACCESS_EXPIRATION_TIME = 1000 * 60 * 2;  //15分钟
+    private static final long ACCESS_EXPIRATION_TIME = 1000 * 60 * 60 * 2;  //2小时，访问令牌过期时间
 
-    private static final long REFRESH_EXPIRATION_TIME = 1000 * 60 * 4;//24小时
+    private static final long REFRESH_EXPIRATION_TIME = 1000 * 60 * 60 * 24;//24小时，刷新令牌过期时间
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
