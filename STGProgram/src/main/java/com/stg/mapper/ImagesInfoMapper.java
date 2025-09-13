@@ -1,0 +1,9 @@
+package com.stg.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.stg.entity.ImagesInfo;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface ImagesInfoMapper extends BaseMapper<ImagesInfo> {
+}

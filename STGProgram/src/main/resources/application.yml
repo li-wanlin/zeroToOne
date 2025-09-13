@@ -1,0 +1,182 @@
+## 端口号  上下文路径
+server:
+  port: 8082
+  servlet:
+    context-path: /STGProgram
+  tomcat:
+    threads:
+      max: 500
+      min-spare: 100
+    accept-count: 100
+
+## 数据源配置
+spring:
+  # 数据库配置(务必根据实际情况修改配置)
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    #    url: jdbc:mysql://localhost:3306/bgsstore?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+    #    username: root+-
+    #    password: Zdsl123456@
+    #    url: jdbc:mysql://8.147.5.217:3306/bgsstore?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+    #    username: dbuser
+    #    password: Zdsl123456@
+    #    url: jdbc:mysql://39.105.1.174:3306/bgsstore?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+    #    username: root
+    #    password: Zdsl123456@
+    url: jdbc:mysql://8.147.5.217:3306/stg?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+    username: root
+    password: Zdsl123456@
+
+#    url: jdbc:mysql://39.162.34.85:3306/stg?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+#    username: zdsl
+#    password: Zdsl123456@
+
+
+#    url: jdbc:mysql://localhost:3306/stg?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+#    username: zdsl
+#    password: Zdsl123456@
+
+    # 设置连接池为Druid
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 10
+      minIdle: 10
+      maxActive: 100
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+
+      # 修正validationQuery配置
+      validationQuery: SELECT 1
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+    p6spy:
+    # 日志格式
+
+      log-format: "\ntime:%(executionTime) || sql:%(sql)\n"
+      # 自定义日志类
+      logging: custom
+      custom-appender-class: com.zdslkj.config.StdoutLogger
+
+  # RabbitMQ ??
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+  # 文件
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  ## 启用热部署
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/java
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, classpath:/public/, classpath:/templates/
+
+
+#mybatis-plus配置
+mybatis-plus:
+  mapper-locations: classpath:com/zdslkj/mappers/*Mapper.xml
+  global-config:
+    db-config:
+      logic-delete-field: is_valid  # 全局逻辑删除的实体字段名(since 3.3.0,配置后可以忽略不配置步骤2)
+      logic-delete-value: 0 # 逻辑已删除值
+      logic-not-delete-value: 1 # 逻辑未删除值
+      field-strategy: not_null  # 只更新非空字段
+
+
+
+
+# 图片存储路径
+image:
+  upload:
+    #path: "D:\\code\\upload\\Images"
+    path: "/usr/local/upload/Images"
+    unv: "/usr/local/upload/Images/unv"
+    uns: "/usr/local/upload/Images/uns"
+    lawPatrol: "/usr/local/upload/STG/Images/lawPatrol"
+    eduTrain: "/usr/local/upload/STG/Images/eduTrain"
+    project: "/usr/local/upload/STG/Images/project"
+    fp: "/usr/local/upload/STG/Images/fp"
+    display: "/usr/local/upload/STG/Images/display"
+
+#PDF存储路径
+PDF:
+  upload:
+  #path: "D:\\code\\upload\\PDF"
+     path: "/usr/local/upload/STG/PDF"
+     safetyDetail: "/usr/local/upload/STG/PDF/safetyDetail"
+     reinforcement: "/usr/local/upload/STG/PDF/reinforcement"
+     delimit: "/usr/local/upload/STG/PDF/delimit"
+     capacityRe: "/usr/local/upload/STG/PDF/capacityRe"
+     emerSup: "/usr/local/upload/STG/PDF/emerSup"
+     check: "/usr/local/upload/STG/PDF/check"
+     silta: "/usr/local/upload/STG/PDF/silta"
+     
+     
+
+
+localFile:
+  upload:
+    basePath: "/usr/local/stg/upload/localFile"
+    reinforcement: "/usr/local/stg/upload/localFile/reinforcement"
+    dangerous: "/usr/local/stg/upload/localFile/dangerous"
+    scrap: "/usr/local/stg/upload/localFile/scrap"
+    equipLv: "/usr/local/stg/upload/localFile/equipLv"
+    monitor: "/usr/local/stg/upload/localFile/monitor"
+    patrol: "/usr/local/stg/upload/localFile/patrol"
+    safeApp: "/usr/local/stg/upload/localFile/safeApp"
+    majorMain: "/usr/local/stg/upload/localFile/majorMain"
+    dayMain: "/usr/local/stg/upload/localFile/dayMain"
+    deposit: "/usr/local/stg/upload/localFile/deposit"
+    occupy: "/usr/local/stg/upload/localFile/occupy"
+    benefit: "/usr/local/stg/upload/localFile/benefit"
+    develop: "/usr/local/stg/upload/localFile/develop"
+    capacity: "/usr/local/stg/upload/localFile/capacity"
+    owership: "/usr/local/stg/upload/localFile/owership"
+    infoLimit: "/usr/local/stg/upload/localFile/infoLimit"
+    safeFlood: "/usr/local/stg/upload/localFile/safeFlood"
+    solution: "/usr/local/stg/upload/localFile/solution"
+    damBreak: "/usr/local/stg/upload/localFile/damBreak"
+    plan: "/usr/local/stg/upload/localFile/plan"
+    team: "/usr/local/stg/upload/localFile/team"
+    train: "/usr/local/stg/upload/localFile/train"
+    workable: "/usr/local/stg/upload/localFile/workable"
+    web: "/usr/local/stg/upload/localFile/web"
+    info: "/usr/local/stg/upload/localFile/info"
+    order: "/usr/local/stg/upload/localFile/order"
+    fire: "/usr/local/stg/upload/localFile/fire"
+    sign: "/usr/local/stg/upload/localFile/sign"
+    planBenefit: "/usr/local/stg/upload/localFile/planBenefit"
+    actBenefit: "/usr/local/stg/upload/localFile/actBenefit"
+    govDoc: "/usr/local/stg/upload/localFile/govDoc"
+    project: "/usr/local/stg/upload/localFile/project"
+    use: "/usr/local/stg/upload/localFile/use"
+    safeMan: "/usr/local/stg/upload/localFile/safeMan"
+    runMan: "/usr/local/stg/upload/localFile/runMan"
+    multi: "/usr/local/stg/upload/localFile/multi"
+    repair: "/usr/local/stg/upload/localFile/repair"
+    post: "/usr/local/stg/upload/localFile/post"
+    biz: "/usr/local/stg/upload/localFile/biz"
+    duties: "/usr/local/stg/upload/localFile/duties"
+    notice: "/usr/local/stg/upload/localFile/notice"     
+
+
+
+
+
+#日志级别由低到高：TRACE、DEBUG、INFO、WARN、ERROR、FATAL
+logging:
+  level:
+    com.stg: INFO
+
